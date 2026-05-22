@@ -67,9 +67,7 @@
   }
 
   function tableBlock(block, ctx) {
-    const cols = block.columns
-      .map(id => ctx.columns.find(c => c.id === id))
-      .filter(Boolean);
+    const cols = ctx.columns.filter(c => c.visible && c.id !== 'col_group');
     if (!cols.length) return paragraph('(empty table)', { italic: true, color: '999999' });
     const filtered = ctx.evaluateBlock(block);
 

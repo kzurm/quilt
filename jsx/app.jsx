@@ -207,11 +207,9 @@ function buildStarterDoc(ds) {
   const blocks = [];
   blocks.push({ id: uid('blk'), type: 'h1', html: 'Summary' });
   blocks.push({ id: uid('blk'), type: 'p', html: `As of ${date}.` });
-  const visibleCols = ds.columns.filter(c => c.visible && c.id !== 'col_group').slice(0, 5).map(c => c.id);
   blocks.push({
     id: uid('blk'), type: 'table',
     label: 'All rows',
-    columns: visibleCols,
     filterMode: 'inherit',
     filters: [], groupFilter: [], rowLimit: 25,
   });

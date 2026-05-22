@@ -15,16 +15,10 @@ function makeBlock(type, dataset) {
   if (type === 'p')  return { id, type, html: '' };
   if (type === 'divider') return { id, type, style: 'thin' };
   if (type === 'table') {
-    // Default: take currently visible columns minus group
-    const cols = (dataset?.columns || [])
-      .filter(c => c.visible && c.id !== 'col_group')
-      .slice(0, 5)
-      .map(c => c.id);
     return {
       id,
       type: 'table',
       label: '',
-      columns: cols,
       // 'inherit' = use the dataset's global filter; null = no extra filter
       filterMode: 'inherit',
       filters: [],
@@ -221,31 +215,8 @@ function DividerBlock({ block, onUpdate }) {
 }
 
 function TableBlock({ block, onUpdate, dataset, evalBlock }) {
-  const cols = block.columns
-    .map(id => dataset.columns.find(c => c.id === id))
-    .filter(Boolean);
+  const cols = dataset.columns.filter(c => c.visible && c.id !== 'col_group');
   const rows = evalBlock(block);
-
-  const [colPickerOpen, setColPickerOpen] = useState(false);
-  const colPickerRef = useRef(null);
-  useClickOutside(colPickerRef, () => setColPickerOpen(false), colPickerOpen);
-
-  const [filterOpen, setFilterOpen] = useState(false);
-  const filterRef = useRef(null);
-  useClickOutside(filterRef, () => setFilterOpen(false), filterOpen);
-
-  function toggleCol(id) {
-    onUpdate({ columns: block.columns.includes(id) ? block.columns.filter(x => x !== id) : [...block.columns, id] });
-  }
-  function moveColumn(id, dir) {
-    const arr = block.columns.slice();
-    const i = arr.indexOf(id);
-    if (i < 0) return;
-    const j = i + dir;
-    if (j < 0 || j >= arr.length) return;
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-    onUpdate({ columns: arr });
-  }
 
   return (
     <div className="b-table">
@@ -259,13 +230,9 @@ function TableBlock({ block, onUpdate, dataset, evalBlock }) {
           />
         </span>
         <span className="meta mono">{rows.length} row{rows.length === 1 ? '' : 's'} · {cols.length} col{cols.length === 1 ? '' : 's'}</span>
-        <span className="actions">
-          <button title="Columns" onClick={() => setColPickerOpen(o => !o)}><Icon name="panel" size={13} /></button>
-          <button title="Filter" onClick={() => setFilterOpen(o => !o)}><Icon name="filter" size={13} /></button>
-        </span>
       </div>
 
-      {cols.length === 0 && <div className="b-table-empty">Add a column to get started.</div>}
+      {cols.length === 0 && <div className="b-table-empty">Enable a column in the left panel to see data here.</div>}
       {cols.length > 0 && (
         <div style={{overflow: 'auto', maxHeight: 480}}>
           <table>
@@ -296,35 +263,9 @@ function TableBlock({ block, onUpdate, dataset, evalBlock }) {
       )}
 
       <div className="b-table-config">
-        <div className="row">
-          <span className="label">Columns</span>
-          {cols.map(c => (
-            <span key={c.id} className="colchip" title="Reorder or remove">
-              <span className="grip mono" style={{cursor: 'grab', color: 'var(--text-faint)'}} onClick={() => moveColumn(c.id, -1)}>‹</span>
-              {c.name}
-              <span className="grip mono" style={{cursor: 'grab', color: 'var(--text-faint)'}} onClick={() => moveColumn(c.id, 1)}>›</span>
-              <button className="x" onClick={() => toggleCol(c.id)}><Icon name="x" size={10} /></button>
-            </span>
-          ))}
-          <button className="colchip add" ref={colPickerRef} onClick={(e) => { e.stopPropagation(); setColPickerOpen(o => !o); }}>
-            <Icon name="plus" size={10} /> Add column
-          </button>
-          {colPickerOpen && (
-            <div className="popover" ref={colPickerRef} style={{position: 'absolute', marginTop: 24}}>
-              <div className="ph">Add column</div>
-              {dataset.columns.filter(c => !block.columns.includes(c.id)).map(c => (
-                <button key={c.id} className="opt" onClick={() => { toggleCol(c.id); setColPickerOpen(false); }}>
-                  <span className={"type-pill type-" + c.type}><span className="swatch"></span></span>
-                  {c.name}
-                </button>
-              ))}
-              {dataset.columns.filter(c => !block.columns.includes(c.id)).length === 0 && (
-                <div className="text-faint" style={{padding: 6, fontSize: 12}}>All columns added.</div>
-              )}
-            </div>
-          )}
+        <div className="row" style={{color: 'var(--text-faint)', fontSize: 11}}>
+          Columns follow the left panel — toggle and reorder there.
         </div>
-
         <div className="row">
           <span className="label">Filter from</span>
           <select className="text-input" style={{width: 'auto', height: 24, padding: '0 8px'}}
