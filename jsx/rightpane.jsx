@@ -120,35 +120,54 @@ function RightPane({ doc, setDoc, dataset, filteredRows, density }) {
             <BlockAdder onAdd={(t) => insertAfter(b.id, t)} />
           </Fragment>
         ))}
+
+        {doc.blocks.length > 0 && (
+          <BlockAdder
+            onAdd={(t) => insertAfter(doc.blocks[doc.blocks.length - 1].id, t)}
+            always
+          />
+        )}
       </div>
     </div>
   );
 }
 
-function BlockAdder({ onAdd, first }) {
+function BlockAdder({ onAdd, first, always }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useClickOutside(ref, () => setOpen(false), open);
+  const menu = open && (
+    <div className="slash-menu" style={{top: always ? 36 : 24, left: '50%', transform: 'translateX(-50%)'}}>
+      <div className="group-label">Blocks</div>
+      {BLOCK_TYPES.map(bt => (
+        <button key={bt.id} className="item" onClick={() => { onAdd(bt.id); setOpen(false); }}>
+          <span className="ic"><Icon name={bt.icon} size={14} /></span>
+          <span>
+            <div className="name">{bt.name}</div>
+            <div className="desc">{bt.desc}</div>
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+  if (always) {
+    return (
+      <div ref={ref} style={{position: 'relative', display: 'flex', justifyContent: 'center', padding: '24px 0 8px'}}>
+        <button className="btn btn-ghost btn-sm" onClick={() => setOpen(o => !o)}
+          style={{color: 'var(--text-muted)', border: '1px dashed var(--border-strong)', borderRadius: 'var(--radius)', padding: '0 12px'}}>
+          <Icon name="plus" size={12} /> Add block
+        </button>
+        {menu}
+      </div>
+    );
+  }
   return (
     <div className={"block-add"} style={{opacity: open ? 1 : undefined, height: first ? 24 : 14}} ref={ref}>
       <span className="line" style={{display: open ? 'block' : undefined}}></span>
       <button className="plus" onClick={() => setOpen(o => !o)} aria-label="Add block">
         <Icon name="plus" size={12} />
       </button>
-      {open && (
-        <div className="slash-menu" style={{top: 24, left: '50%', transform: 'translateX(-50%)'}}>
-          <div className="group-label">Blocks</div>
-          {BLOCK_TYPES.map(bt => (
-            <button key={bt.id} className="item" onClick={() => { onAdd(bt.id); setOpen(false); }}>
-              <span className="ic"><Icon name={bt.icon} size={14} /></span>
-              <span>
-                <div className="name">{bt.name}</div>
-                <div className="desc">{bt.desc}</div>
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
+      {menu}
     </div>
   );
 }
